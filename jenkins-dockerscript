@@ -1,0 +1,23 @@
+node{
+    stage('Scm Checkout'){
+        git credentialsId: 'git-creds', url: 'https://github.com/ChahnithaChandu/exam'
+        
+    }
+    stage('Mvn Package'){
+        def  mvnHome = tool name: 'Apache Maven 3.6.3', type: 'maven'
+        def mvnCMD = "${mvnHome}/bin/mvn"
+        sh "${mvnCMD} clean package"
+    }
+    stage('Build Docker Image'){
+        sh 'docker build -t chahnitha/exam:2.0.0 .'
+    }
+    stage('Push Docker Image'){
+        withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhubpwd')]) {
+    sh "docker login -u chahnitha -p ${dockerhubpwd}"
+}
+        sh 'docker push chahnitha/exam:2.0.0'
+    }
+    stage('Run Container on Dev Server'){
+        sh 'docker run -p 8081:8080 -d  chahnitha/exam:2.0.0'
+    }
+}
